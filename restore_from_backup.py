@@ -10,7 +10,7 @@ except:
 
 metadata = dict (
 	CREATEDB_CMD = 'createdb -U odoo -h localhost %s',
-	RESTORE_CMD = 'psql -U odoo -h localhost -d %s -f %s'
+	RESTORE_CMD = 'psql -U odoo -h localhost -d %s -f %s -o restore.log'
 )
 
 import subprocess as sp
