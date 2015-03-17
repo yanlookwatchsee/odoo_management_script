@@ -30,7 +30,7 @@ metadata = dict (
 import os,re,sys
 import subprocess as sp
 
-@fake
+#@fake
 def issue(command=None):
 	if command:
 		msg('Execute: '+' '.join(command.split()))
@@ -76,8 +76,10 @@ def preodically_backup():
 if __name__ == '__main__':
 	try:
 		db_name = sys.argv[1]
+		metadata['DB_NAME'] = db_name
 	except:
-		print 'Usage: perodic_backup.py <db_name> &'	
-	metadata['DB_NAME'] = db_name
+		print 'Usage: perodic_backup.py <db_name> &\n'
+		sys.exit(0)
+
 	preodically_backup()
 
