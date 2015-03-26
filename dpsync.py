@@ -5,8 +5,11 @@ from dropbox import client, rest, session
 
 class DpClient:
 	def login(self):
-		self.app_key = '4r474afwyk3z6q2'
-		self.app_secret = 'mq7ttcmg3pkxv5c'
+		self.DP_PASS_FILE = '/home/ubuntu/.dropboxpass'
+		with open(self.DP_PASS_FILE) as f:
+			l = f.read().split()
+			self.app_key, self.app_secret = l[0], l[1]
+
 		self.flow = client.DropboxOAuth2FlowNoRedirect(self.app_key, self.app_secret)
 		authorize_url = self.flow.start()
 		print "1. Go to: " + authorize_url
@@ -21,9 +24,10 @@ class DpClient:
 		self.TOKEN_FILE = 'token_file'
 		try:
 			with open(self.TOKEN_FILE, 'r') as f:
-				access_token = f.read()
+				access_token = f.read().strip()
 				self.api_client = client.DropboxClient(access_token)
 		except:
+			raise
 			self.login()
 
 	def put(self, path):
@@ -35,4 +39,6 @@ class DpClient:
 
 
 
+if __name__ == '__main__':
+	c = DpClient()
 
