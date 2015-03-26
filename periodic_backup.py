@@ -5,6 +5,8 @@ def bypass(f):
 	return nf
 
 import syslog
+import dpsync
+c = dpsync.DpClient()
 
 #@bypass
 def msg(s):
@@ -19,15 +21,14 @@ def fake(f):
 import time
 
 metadata = dict (
-	DB_NAME = 'test.db',
 	PATH = '/home/ubuntu/odoo_backup/',
 	TYPE = ('hourly', 'daily', 'weekly'),
-	BACKUP_FILE_PATTERN = '.backup.(?P<backtype>\w+)-(?P<date>.*)',
-	BACKUP_COMMAND = 'pg_dump -U odoo -w -h localhost -n public -O ',
+	BACKUP_FILE_PATTERN = 'doubletree.db.backup.(?P<backtype>\w+)-(?P<date>.*)',
+	BACKUP_COMMAND = 'pg_dump -U odoo -w -h localhost -n public -O doubletree.db -f ',
 	COUNT = 0
 )
 
-import os,re,sys
+import os,re
 import subprocess as sp
 
 #@fake
@@ -42,7 +43,7 @@ def do_backup(t):
 		return
 	msg(t+' backup begin')
 	msg(t+' backup check exsiting backup ... ')
-	p = re.compile(metadata['DB_NAME']+metadata['BACKUP_FILE_PATTERN'])
+	p = re.compile(metadata['BACKUP_FILE_PATTERN'])
 	def check(arg, dirname, names):
 		for name in names:
 			m = p.match(name)
@@ -52,34 +53,37 @@ def do_backup(t):
 			if m.group('backtype') == t:
 				cmd = 'rm '+dirname+m.group()
 				issue(command=cmd)
-
+				try:
+					c.delete(name)
+					msg('Dropbox file deleted')
+				except:
+					msg('No such file: %s'%name)
+				
 		
 	os.path.walk(metadata['PATH'], check, None)
 	sig = t+'-'+time.asctime().replace(' ', '-').replace(':', '-')
-	cmd = metadata['BACKUP_COMMAND']+metadata['DB_NAME']+' -f '+metadata['PATH']+metadata['DB_NAME']+'.backup.%s'%sig
+	cmd = metadata['BACKUP_COMMAND']+metadata['PATH']+'doubletree.db.backup.%s'%sig
 	issue(command=cmd)
+	msg('pg_dump done')
+	try:
+		c.put(metadata['PATH']+'doubletree.db.backup.%s'%sig)
+		msg('Upload to dropbox')
+	except:
+		msg('Dropbox sync error!')
 	msg(t+' backup end')
 
 
 
 def preodically_backup():
-	while True:
-		metadata['COUNT'] += 1
-		backup_type = lambda cnt: (cnt%168==0 and 'weekly') or (cnt%24==0 and 'daily') or 'hourly'
-		t = backup_type(metadata['COUNT'])
-		try:
-			do_backup(t)
-		except:
-			msg('error when doing '+t+' backup!')
-		time.sleep(3600) # hourly check
-
-if __name__ == '__main__':
+	metadata['COUNT'] += 1
+	backup_type = lambda cnt: (cnt%168==0 and 'weekly') or (cnt%24==0 and 'daily') or 'hourly'
+	t = backup_type(metadata['COUNT'])
 	try:
-		db_name = sys.argv[1]
-		metadata['DB_NAME'] = db_name
+		do_backup(t)
 	except:
-		print 'Usage: perodic_backup.py <db_name> &\n'
-		sys.exit(0)
+		msg('error when doing '+t+' backup!')
+	time.sleep(3600) # hourly check
 
-	preodically_backup()
+
+preodically_backup()
 
