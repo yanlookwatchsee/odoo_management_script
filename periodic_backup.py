@@ -75,14 +75,15 @@ def do_backup(t):
 
 
 def preodically_backup():
-	metadata['COUNT'] += 1
-	backup_type = lambda cnt: (cnt%168==0 and 'weekly') or (cnt%24==0 and 'daily') or 'hourly'
-	t = backup_type(metadata['COUNT'])
-	try:
-		do_backup(t)
-	except:
-		msg('error when doing '+t+' backup!')
-	time.sleep(3600) # hourly check
+	while True:
+		metadata['COUNT'] += 1
+		backup_type = lambda cnt: (cnt%168==0 and 'weekly') or (cnt%24==0 and 'daily') or 'hourly'
+		t = backup_type(metadata['COUNT'])
+		try:
+			do_backup(t)
+		except:
+			msg('error when doing '+t+' backup!')
+		time.sleep(3600) # hourly check
 
 
 preodically_backup()
