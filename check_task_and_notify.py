@@ -1,11 +1,15 @@
 #!/usr/bin/python
 
 import smtplib
-import time, math
+import time, syslog
 import psycopg2 as pg
 
 
 G_SETTINGS = None
+
+def msg(s):
+	syslog.syslog(s)
+
 
 def debug_filter(f):
 	def nf():
@@ -104,7 +108,7 @@ class MailNotifyAgent(NotifyAgent):
 		self.ACCOUNT = G_SETTINGS['GMAIL_ACCOUNT']
 		self.PASSWORD = G_SETTINGS['GMAIL_PASSWORD']
 		self.server = smtplib.SMTP_SSL(G_SETTINGS['GMAIL_GATEWAY'])
-		self.server.set_debuglevel(1)
+		#self.server.set_debuglevel(1)
 		self.server.login(self.ACCOUNT, self.PASSWORD)
 
 	def notify(self, dst, task, due_date, cond=None):
@@ -115,7 +119,9 @@ class MailNotifyAgent(NotifyAgent):
 		header = "From: \"%s\" <%s>\r\nTo: %s\r\n" \
 						% (G_SETTINGS['NA_DISPLAY_NAME'], fromaddr, ", ".join(toaddrs))\
 						 + "Subject: Alert of Task \"%s\"\r\n\r\n"%task
+		msg('Ready to send mail alert:\n'+header)
 		self.server.sendmail(fromaddr, toaddrs, header+self.compose_msg(dst,task,due_date))
+		msg('Mail alert done!')
 	
 	def close(self):
 		self.server.quit()
@@ -124,9 +130,9 @@ class MailNotifyAgent(NotifyAgent):
 class STDINNotifyAgent(NotifyAgent):
 	def notify(self, dst, task, due_date, cond=None):
 		delta = self.get_date_delta(due_date[0], due_date[1], due_date[2])
-		print '******',delta
+		msg( '****** %d'%delta)
 		if delta >1: return
-		print self.compose_msg(dst, task, due_date)
+		msg(self.compose_msg(dst, task, due_date))
 		
 def get_notify_agent(t="STDIN"):
 	if t=='STDIN':
@@ -143,7 +149,9 @@ tasks = fetch_task()
 
 for task in tasks:
 	d = task[5]
+	msg('Ready to notify!\n')
 	na.notify([ (task[1], task[2]) ,(task[3], task[4]) ], task[0], (d.year, d.month, d.day))
+	msg('Notify done!\n')
 
 na.close()
 
