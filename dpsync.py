@@ -21,7 +21,7 @@ class DpClient:
 			f.write(access_token)
 
 	def __init__(self):
-		self.TOKEN_FILE = 'token_file'
+		self.TOKEN_FILE = '/etc/odoo/.dp_token_file'
 		try:
 			with open(self.TOKEN_FILE, 'r') as f:
 				access_token = f.read().strip()

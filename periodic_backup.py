@@ -6,7 +6,6 @@ def bypass(f):
 
 import syslog
 import dpsync
-c = dpsync.DpClient()
 
 #@bypass
 def msg(s):
@@ -41,6 +40,7 @@ def issue(command=None):
 def do_backup(t):
 	if not t:
 		return
+	c = dpsync.DpClient()
 	msg(t+' backup begin')
 	msg(t+' backup check exsiting backup ... ')
 	p = re.compile(metadata['BACKUP_FILE_PATTERN'])
@@ -75,16 +75,14 @@ def do_backup(t):
 
 
 def preodically_backup():
-	while True:
-		metadata['COUNT'] += 1
-		backup_type = lambda cnt: (cnt%168==0 and 'weekly') or (cnt%24==0 and 'daily') or 'hourly'
-		t = backup_type(metadata['COUNT'])
-		try:
-			do_backup(t)
-		except:
-			msg('error when doing '+t+' backup!')
-		time.sleep(3600) # hourly check
+	metadata['COUNT'] += 1
+	backup_type = lambda cnt: (cnt%168==0 and 'weekly') or (cnt%24==0 and 'daily') or 'hourly'
+	t = backup_type(metadata['COUNT'])
+	try:
+		do_backup(t)
+	except:
+		msg('error when doing '+t+' backup!')
 
-
-preodically_backup()
+if __name__ == '__main__':
+	preodically_backup()
 
