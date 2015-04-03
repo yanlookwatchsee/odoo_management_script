@@ -137,7 +137,7 @@ class NotifyAgent:
 		ret = retrive_project_info(project_id);
 		if len(ret):
 			compose_d.update(dict(PROJECT=ret[1], CUSTOMER=ret[2], CUS_PO=', '.join(ret[3])))
-		subject = "Subject: Alert of Task \"%(TASK)s\" for Customer \"%(CUSTOMER)s\"\r\n\r\n"%compose_d
+		subject = "Subject: Alert of Task \"%(TASK)s\" of Project \"%(PROJECT)s\" for Customer \"%(CUSTOMER)s\"\r\n\r\n"%compose_d
 		header = "From: \"%s\" <%s>\r\nTo: %s\r\n" \
 						% (G_SETTINGS['NA_DISPLAY_NAME'], fromaddr, ", ".join(toaddrs))\
 						 + subject
