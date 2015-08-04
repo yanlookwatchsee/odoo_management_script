@@ -24,7 +24,7 @@ metadata = dict (
 	TYPE = ('hourly', 'daily', 'weekly'),
 	BACKUP_FILE_PATTERN = 'doubletree.db.backup.(?P<backtype>\w+)-(?P<date>.*)',
 	BACKUP_COMMAND = 'pg_dump -U odoo -w -h localhost -n public -O doubletree.db -f ',
-	COUNT = 0
+	COUNT_FILE = '/home/ubuntu/backup.count'
 )
 
 import os,re
@@ -72,12 +72,25 @@ def do_backup(t):
 		msg('Dropbox sync error!')
 	msg(t+' backup end')
 
-
+def increase_count():
+	cnt_file = metadata['COUNT_FILE']
+	cnt = 0
+	try:
+		with open(cnt_file, 'r') as f:
+			cnt = int(f.read())
+	except IOError:
+		msg(cnt_file+' not found!')
+		with open(cnt_file, 'w') as f:
+			f.write('0')
+	cnt+=1
+	with open(cnt_file, 'w') as f:
+		f.write(str(cnt))
+	return cnt
 
 def preodically_backup():
-	metadata['COUNT'] += 1
+	backup_count = increase_count()
 	backup_type = lambda cnt: (cnt%168==0 and 'weekly') or (cnt%24==0 and 'daily') or 'hourly'
-	t = backup_type(metadata['COUNT'])
+	t = backup_type(backup_count)
 	try:
 		do_backup(t)
 	except:
